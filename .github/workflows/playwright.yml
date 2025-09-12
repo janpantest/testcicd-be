@@ -36,6 +36,9 @@ jobs:
         # run: npx playwright test --project=chromium
         run: npx playwright test
 
+      - name: List files in report directory
+        run: ls -la playwright-report || echo "Report folder not found"
+
       - name: Upload Playwright report
         if: always()
         uses: actions/upload-artifact@v4
