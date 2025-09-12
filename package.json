@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "apiGet": "npx playwright test tests/apiGet.spec.ts",
-    "apiChained": "npx playwright test tests/apiChained.spec.ts"
+    "apiChained": "npx playwright test tests/apiChained.spec.ts",
+    "apiGetNo": "npx playwright test tests/apiGetNoEnv.spec.ts"
   },
   "keywords": [],
   "author": "",
