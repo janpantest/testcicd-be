@@ -18,6 +18,8 @@
   "devDependencies": {
     "@types/node": "^24.2.1",
     "ts-node": "^10.9.2",
+    "allure-commandline": "^2.34.1",
+    "allure-playwright": "^3.4.1",
     "typescript": "^5.9.2"
   }
 }
