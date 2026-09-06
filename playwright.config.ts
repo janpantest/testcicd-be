@@ -1,8 +1,10 @@
 import { defineConfig } from '@playwright/test';
+import dotenv from 'dotenv';
+dotenv.config();
 
 export default defineConfig({
   use: {
-    baseURL: 'https://demoqa.com',
+    baseURL: process.env.BASE_URL || 'https://demoqa.com',
   },
   // Optional: set global timeout, retries, etc.
   timeout: 30_000,
