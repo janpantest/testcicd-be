@@ -6,12 +6,17 @@ dotenv.config();
 
 test.describe('API Testing with Playwright + TypeScript', () => {
   let apiContext: APIRequestContext;
-  const url = process.env.BASE_URL!;
+  // const password = requireEnv('PASSWORD');
+  // const baseURL = requireEnv('BASE_URL');
+
+  const userName = `${process.env.USERNAME_PREFIX}${Date.now()}`;
+  const password = process.env.PASSWORD!;
+  const baseURL = process.env.BASE_URL!;
   const responseKey = 'books';
 
   test.beforeAll(async () => {
     apiContext = await request.newContext({
-      baseURL: url,
+      baseURL: baseURL,
       extraHTTPHeaders: {
         'Content-Type': 'application/json',
       },

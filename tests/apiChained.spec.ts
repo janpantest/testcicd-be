@@ -1,15 +1,15 @@
 import { test, expect, request, APIRequestContext } from '@playwright/test';
 import dotenv from 'dotenv';
-import { payloadCreateUser } from '../payload/payloadCreateUser';
+import { payloadUserCredentials } from '../payload/payloadUserCredentials';
 import { payloadAddBook } from '../payload/payloadAddBook';
-import { payloadAuthorizeUser } from '../payload/payloadAuthorizeUser';
-import { payloadGenerateToken } from '../payload/payloadGenerateToken';
 import { chainedKey } from '../constants/keys';
-
 dotenv.config();
 
 test.describe('Chained API calls - DemoQA', () => {
   let apiContext: APIRequestContext;
+  // const password = requireEnv('PASSWORD');
+  // const baseURL = requireEnv ('BASE_URL');
+
   const userName = `${process.env.USERNAME_PREFIX}${Date.now()}`;
   const password = process.env.PASSWORD!;
   const baseURL = process.env.BASE_URL!;
@@ -32,7 +32,7 @@ test.describe('Chained API calls - DemoQA', () => {
   test('Create user -> Generate token -> Authorize -> Add book', async () => {
     // Create user
     const createUserResponse = await apiContext.post('/Account/v1/User', {
-      data: payloadCreateUser(userName, password)
+      data: payloadUserCredentials(userName, password)
     });
     expect(createUserResponse.status()).toBe(201);
     const createUserBody = await createUserResponse.json();
@@ -42,7 +42,7 @@ test.describe('Chained API calls - DemoQA', () => {
 
     // Generate token
     const tokenResponse = await apiContext.post('/Account/v1/GenerateToken', {
-      data: payloadGenerateToken(userName, password)
+      data: payloadUserCredentials(userName, password)
     });
     expect(tokenResponse.status()).toBe(200);
     const tokenBody = await tokenResponse.json();
@@ -53,7 +53,7 @@ test.describe('Chained API calls - DemoQA', () => {
     // Authorize user
     const authResponse = await apiContext.post('/Account/v1/Authorized', {
       // data: { userName, password },
-      data: payloadAuthorizeUser(userName, password)
+      data: payloadUserCredentials(userName, password)
     });
     expect(authResponse.status()).toBe(200);
     const authResult = await authResponse.json();
