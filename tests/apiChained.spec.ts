@@ -2,13 +2,11 @@ import { test, expect, request, APIRequestContext } from '@playwright/test';
 import dotenv from 'dotenv';
 import { payloadUserCredentials } from '../payload/payloadUserCredentials';
 import { payloadAddBook } from '../payload/payloadAddBook';
-import { chainedKey } from '../constants/keys';
+import { chainedKey, isbnValue } from '../constants/keys';
 dotenv.config();
 
 test.describe('Chained API calls - DemoQA', () => {
   let apiContext: APIRequestContext;
-  // const password = requireEnv('PASSWORD');
-  // const baseURL = requireEnv ('BASE_URL');
 
   const userName = `${process.env.USERNAME_PREFIX}${Date.now()}`;
   const password = process.env.PASSWORD!;
@@ -39,6 +37,7 @@ test.describe('Chained API calls - DemoQA', () => {
     // console.info('Create User Response:', createUserBody);
     userId = createUserBody.userID;
     expect(userId).toBeTruthy();
+    expect((createUserBody.username)).toEqual(userName)
 
     // Generate token
     const tokenResponse = await apiContext.post('/Account/v1/GenerateToken', {
@@ -46,13 +45,13 @@ test.describe('Chained API calls - DemoQA', () => {
     });
     expect(tokenResponse.status()).toBe(200);
     const tokenBody = await tokenResponse.json();
+    // console.info(createUserBody)
     // console.info('Generate Token Response:', tokenBody);
     token = tokenBody.token;
     expect(token).toBeTruthy();
 
     // Authorize user
     const authResponse = await apiContext.post('/Account/v1/Authorized', {
-      // data: { userName, password },
       data: payloadUserCredentials(userName, password)
     });
     expect(authResponse.status()).toBe(200);
@@ -72,6 +71,22 @@ test.describe('Chained API calls - DemoQA', () => {
     addBookBody[responseKey].forEach((item: any) => {
       expect(item).toHaveProperty(chainedKey);
     });    
+
+    // Check
+    const response = await apiContext.get('/BookStore/v1/Books');
+    // console.info(await response.json());
+    expect(response.status()).toBe(200);
+
+    const body = await response.json(); 
+    // const body: BooksResponse = await response.json(); 
+    // console.info(JSON.stringify(body, null, 2));
+    expect(body.books).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          isbn: isbnValue
+        })
+      ])
+    );
   });
 
   test.afterAll(async () => {
