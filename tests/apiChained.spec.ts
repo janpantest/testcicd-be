@@ -2,13 +2,11 @@ import { test, expect, request, APIRequestContext } from '@playwright/test';
 import dotenv from 'dotenv';
 import { payloadUserCredentials } from '../payload/payloadUserCredentials';
 import { payloadAddBook } from '../payload/payloadAddBook';
-import { BooksResponse, chainedKey, isbnValue } from '../constants/keys';
+import { chainedKey, isbnValue } from '../constants/keys';
 dotenv.config();
 
 test.describe('Chained API calls - DemoQA', () => {
   let apiContext: APIRequestContext;
-  // const password = requireEnv('PASSWORD');
-  // const baseURL = requireEnv ('BASE_URL');
 
   const userName = `${process.env.USERNAME_PREFIX}${Date.now()}`;
   const password = process.env.PASSWORD!;
@@ -54,7 +52,6 @@ test.describe('Chained API calls - DemoQA', () => {
 
     // Authorize user
     const authResponse = await apiContext.post('/Account/v1/Authorized', {
-      // data: { userName, password },
       data: payloadUserCredentials(userName, password)
     });
     expect(authResponse.status()).toBe(200);
@@ -83,7 +80,6 @@ test.describe('Chained API calls - DemoQA', () => {
     const body = await response.json(); 
     // const body: BooksResponse = await response.json(); 
     // console.info(JSON.stringify(body, null, 2));
-    // expect(body.books[0].isbn).toEqual(isbnValue); 
     expect(body.books).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -91,14 +87,6 @@ test.describe('Chained API calls - DemoQA', () => {
         })
       ])
     );
-    // expect(
-    //   body.books.some(book => book.isbn === isbnValue)
-    // ).toBe(true);
-
-
-    // expect(body).toHaveProperty(responseKey);
-    // expect(Array.isArray(body[responseKey])).toBe(true);
-    // expect(body[responseKey].length).toBeGreaterThan(0);
   });
 
   test.afterAll(async () => {
