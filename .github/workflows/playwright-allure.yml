@@ -1,0 +1,55 @@
+name: Playwright Tests With Allure
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+
+    env:
+      BASE_URL: ${{ secrets.BASE_URL }}
+      USERNAME_PREFIX: ${{ secrets.USERNAME_PREFIX }}
+      PASSWORD: ${{ secrets.PASSWORD }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      # - name: Install Playwright Browsers
+        # run: npx playwright install --with-deps
+        # run: npx playwright install chromium --with-deps
+
+      - name: Run Playwright tests
+        # run: npx playwright test --project=chromium
+        run: npx playwright test
+
+      - name: Generate Allure Report
+        run: npx allure generate allure-results --clean -o allure-report
+
+      - name: Upload Allure Report as Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-report
+          path: allure-report
+
+      # # Optional: Deploy to GitHub Pages
+      # - name: Deploy Allure Report to GitHub Pages
+      #   if: github.ref == 'refs/heads/main'
+      #   uses: peaceiris/actions-gh-pages@v4
+      #   with:
+      #     github_token: ${{ secrets.GITHUB_TOKEN }}
+      #     publish_dir: ./allure-report
