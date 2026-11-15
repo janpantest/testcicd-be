@@ -17,7 +17,6 @@ test.describe('Chained API calls - DemoQA', () => {
   let userId: string;
   let token: string;
   let isbnToAdd: string;
-
   const responseKey = 'books';
 
   // Create API request context
@@ -32,7 +31,6 @@ test.describe('Chained API calls - DemoQA', () => {
   });
 
   test('Create user -> Generate token -> Get books -> Add book -> Verify collection', async () => {
-
     // 1. Create user
     const createUserResponse = await apiContext.post(
       '/Account/v1/User',
@@ -47,10 +45,8 @@ test.describe('Chained API calls - DemoQA', () => {
     userId = createUserBody.userID;
     expect(userId).toBeTruthy();
     expect(createUserBody.username).toEqual(userName);
-
     // console.info('Created user:', userName);
     // console.info('User ID:', userId);
-
 
     // 2. Generate token
     const tokenResponse = await apiContext.post(
@@ -77,9 +73,7 @@ test.describe('Chained API calls - DemoQA', () => {
     expect(initialBody.books.length).toBeGreaterThan(0);
     isbnToAdd = initialBody.books[0].isbn;
     expect(isbnToAdd).toBeTruthy();
-
     // console.info('Selected ISBN:', isbnToAdd);
-
 
     // 4. Add book to user collection
     const addBookResponse = await apiContext.post(
