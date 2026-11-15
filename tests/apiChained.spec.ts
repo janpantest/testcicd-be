@@ -2,93 +2,122 @@ import { test, expect, request, APIRequestContext } from '@playwright/test';
 import dotenv from 'dotenv';
 import { payloadUserCredentials } from '../payload/payloadUserCredentials';
 import { payloadAddBook } from '../payload/payloadAddBook';
-import { chainedKey, isbnValue } from '../constants/keys';
+import { chainedKey } from '../constants/keys';
 dotenv.config();
 
 test.describe('Chained API calls - DemoQA', () => {
   let apiContext: APIRequestContext;
 
-  const userName = `${process.env.USERNAME_PREFIX}${Date.now()}`;
+  // Environment variables
+  const userName = `${process.env.USERNAME_PREFIX}-${Date.now()}`;
   const password = process.env.PASSWORD!;
   const baseURL = process.env.BASE_URL!;
-  
+
+  // Variables used across API requests
   let userId: string;
   let token: string;
-  
-  const responseKey = 'books'
+  let isbnToAdd: string;
+  const responseKey = 'books';
 
+  // Create API request context
   test.beforeAll(async () => {
     apiContext = await request.newContext({
       baseURL,
       extraHTTPHeaders: {
         'Content-Type': 'application/json',
-        accept: 'application/json',
+        'Accept': 'application/json',
       },
     });
   });
 
-  test('Create user -> Generate token -> Authorize -> Add book', async () => {
-    // Create user
-    const createUserResponse = await apiContext.post('/Account/v1/User', {
-      data: payloadUserCredentials(userName, password)
-    });
+  test('Create user -> Generate token -> Get books -> Add book -> Verify collection', async () => {
+    // 1. Create user
+    const createUserResponse = await apiContext.post(
+      '/Account/v1/User',
+      {
+        data: payloadUserCredentials(userName, password),
+      }
+    );
+
     expect(createUserResponse.status()).toBe(201);
+
     const createUserBody = await createUserResponse.json();
-    // console.info('Create User Response:', createUserBody);
     userId = createUserBody.userID;
     expect(userId).toBeTruthy();
-    expect((createUserBody.username)).toEqual(userName)
+    expect(createUserBody.username).toEqual(userName);
+    // console.info('Created user:', userName);
+    // console.info('User ID:', userId);
 
-    // Generate token
-    const tokenResponse = await apiContext.post('/Account/v1/GenerateToken', {
-      data: payloadUserCredentials(userName, password)
-    });
+    // 2. Generate token
+    const tokenResponse = await apiContext.post(
+      '/Account/v1/GenerateToken',
+      {
+        data: payloadUserCredentials(userName, password),
+      }
+    );
+
     expect(tokenResponse.status()).toBe(200);
+
     const tokenBody = await tokenResponse.json();
-    // console.info(createUserBody)
-    // console.info('Generate Token Response:', tokenBody);
     token = tokenBody.token;
     expect(token).toBeTruthy();
 
-    // Authorize user
-    const authResponse = await apiContext.post('/Account/v1/Authorized', {
-      data: payloadUserCredentials(userName, password)
-    });
-    expect(authResponse.status()).toBe(200);
-    const authResult = await authResponse.json();
-    expect(authResult).toBe(true);
-    // console.info('Authorize Response:', authResult);
+    // 3. Get available books
+    const initialResponse = await apiContext.get(
+      '/BookStore/v1/Books'
+    );
 
-    // Add book
-    const addBookResponse = await apiContext.post('/BookStore/v1/Books', {
-      headers: { Authorization: `Bearer ${token}` },
-      data: payloadAddBook(userId)
-    });
+    expect(initialResponse.status()).toBe(200);
+
+    const initialBody = await initialResponse.json();
+    expect(initialBody.books.length).toBeGreaterThan(0);
+    isbnToAdd = initialBody.books[0].isbn;
+    expect(isbnToAdd).toBeTruthy();
+    // console.info('Selected ISBN:', isbnToAdd);
+
+    // 4. Add book to user collection
+    const addBookResponse = await apiContext.post(
+      '/BookStore/v1/Books',
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        data: payloadAddBook(userId, isbnToAdd),
+      }
+    );
+
     expect(addBookResponse.status()).toBe(201);
+
     const addBookBody = await addBookResponse.json();
-    // console.info('Add Book Response:', addBookBody);
     expect(addBookBody).toHaveProperty(responseKey);
     addBookBody[responseKey].forEach((item: any) => {
       expect(item).toHaveProperty(chainedKey);
-    });    
+    });
 
-    // Check
-    const response = await apiContext.get('/BookStore/v1/Books');
-    // console.info(await response.json());
-    expect(response.status()).toBe(200);
-
-    const body = await response.json(); 
-    // const body: BooksResponse = await response.json(); 
-    // console.info(JSON.stringify(body, null, 2));
-    expect(body.books).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          isbn: isbnValue
-        })
-      ])
+    // 5. Verify book in user collection
+    const userResponse = await apiContext.get(
+      `/Account/v1/User/${userId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
     );
+
+    expect(userResponse.status()).toBe(200);
+
+    const userBody = await userResponse.json();
+    const bookExists = userBody.books.some(
+      (book: { isbn: string }) => book.isbn === isbnToAdd
+    );
+
+    expect(
+      bookExists,
+      'Newly added book should exist in user collection'
+    ).toBe(true);
   });
 
+  // Dispose API request context
   test.afterAll(async () => {
     await apiContext.dispose();
   });
