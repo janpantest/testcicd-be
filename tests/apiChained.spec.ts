@@ -71,9 +71,10 @@ test.describe('Chained API calls - DemoQA', () => {
 
     const initialBody = await initialResponse.json();
     expect(initialBody.books.length).toBeGreaterThan(0);
-    isbnToAdd = initialBody.books[0].isbn;
+    const bookAmount = initialBody.books.length;
+    const randomIndex = Math.floor(Math.random() * bookAmount);
+    isbnToAdd = initialBody.books[randomIndex].isbn;
     expect(isbnToAdd).toBeTruthy();
-    // console.info('Selected ISBN:', isbnToAdd);
 
     // 4. Add book to user collection
     const addBookResponse = await apiContext.post(
